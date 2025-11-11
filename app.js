@@ -120,6 +120,10 @@ var NumberMatcherApp = {
             // 使用硬编码的默认数据作为备用
             var defaultData = { "numberGroups": [
         {
+            "id": "2025301",
+            "numbers": [8, 9, 11, 13, 14, 18, 21, 30, 33, 34, 40, 44, 46, 51, 58, 62, 65, 67, 77, 78]
+        },
+        {
             "id": "2025300",
             "numbers": [4, 11, 20, 26, 29, 35, 37, 39, 47, 54, 55, 59, 63, 64, 65, 67, 70, 71, 72, 74]
         },
@@ -2306,12 +2310,6 @@ var NumberMatcherApp = {
     
     // 显示Toast消息
     showToast: function(message, type) {
-        // 检查toast元素是否存在
-        if (!this.elements.toast || !this.elements.toastMessage || !this.elements.toastIcon) {
-            console.log('Toast元素未找到');
-            return;
-        }
-        
         // 获取toast元素引用
         var toast = this.elements.toast;
         var toastMessage = this.elements.toastMessage;
@@ -2349,33 +2347,15 @@ var NumberMatcherApp = {
                 toastIcon.classList.add('fa-info-circle', 'text-neon-blue');
         }
         
-        // 确保toast样式正确
-        toast.style.cssText = '';
-        toast.style.position = 'fixed';
-        toast.style.bottom = '4px';
-        toast.style.right = '4px';
-        toast.style.backgroundColor = '#1f2937';
-        toast.style.borderLeft = '4px solid';
-        toast.style.padding = '12px 16px';
-        toast.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-        toast.style.zIndex = '50';
-        toast.style.display = 'flex';
-        toast.style.alignItems = 'center';
-        toast.style.gap = '12px';
-        
         // 显示Toast
+        toast.style.display = 'block';
         toast.style.transform = 'translateY(0)';
         toast.style.opacity = '1';
-        toast.style.transition = 'all 0.3s ease';
         
         // 3秒后自动隐藏
         this.toastTimer = setTimeout(function() {
             toast.style.transform = 'translateY(20px)';
             toast.style.opacity = '0';
-            // 等待动画完成后隐藏
-            setTimeout(function() {
-                toast.style.display = 'none';
-            }, 300);
             
             // 完全隐藏后设置display: none以避免占用空间
             setTimeout(function() {
