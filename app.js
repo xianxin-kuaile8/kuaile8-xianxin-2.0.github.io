@@ -100,6 +100,8 @@ var NumberMatcherApp = {
             try {
                 var parsed = JSON.parse(savedData);
                 this.state.numberGroups = parsed.numberGroups || [];
+                // 重新排序和编号号码组
+                this.reorderAndRenumberGroups();
                 this.updateDataCount();
                 console.log('成功加载保存的数据，共', this.state.numberGroups.length, '个号码组');
             } catch (e) {
@@ -1903,8 +1905,19 @@ var NumberMatcherApp = {
                 }
             });
             
-            // 计算遗漏期数，使用索引差值计算
-            var absencePeriods = maxIndex > 0 ? maxIndex - maxMatchedIndex : 0;
+            // 计算遗漏期数，使用连续编号差值计算
+            var latestGroupIndex = 0;
+            var matchedGroupIndex = 0;
+            allNumberGroups.forEach(function(group) {
+                var idNum = parseInt(group.id);
+                if (idNum === maxGroupId) {
+                    latestGroupIndex = group.index;
+                }
+                if (idNum === maxMatchedGroupId) {
+                    matchedGroupIndex = group.index;
+                }
+            });
+            var absencePeriods = latestGroupIndex > 0 ? latestGroupIndex - matchedGroupIndex : 0;
             
             // 计算概率，使用过滤后的号码组数量作为分母
             var probability = (occurrences / numberGroups.length * 100).toFixed(2);
@@ -2178,23 +2191,32 @@ var NumberMatcherApp = {
         }
     },
     
-    // 添加号码组
-    addNumberGroup: function(group) {
-        // 找到当前最大的编号
-        var maxIndex = 0;
-        this.state.numberGroups.forEach(function(g) {
-            if (g.index && g.index > maxIndex) {
-                maxIndex = g.index;
-            }
+    // 重新排序和编号所有号码组
+    reorderAndRenumberGroups: function() {
+        // 按期数从小到大排序
+        this.state.numberGroups.sort(function(a, b) {
+            var idA = parseInt(a.id) || 0;
+            var idB = parseInt(b.id) || 0;
+            return idA - idB;
         });
         
-        // 为新号码组添加编号
-        this.state.numberGroups.unshift({
+        // 重新编号，从1开始
+        this.state.numberGroups.forEach(function(group, index) {
+            group.index = index + 1;
+        });
+    },
+    
+    // 添加号码组
+    addNumberGroup: function(group) {
+        // 添加新号码组
+        this.state.numberGroups.push({
             id: group.id,
             numbers: group.numbers,
-            timestamp: new Date().toISOString(),
-            index: maxIndex + 1
+            timestamp: new Date().toISOString()
         });
+        
+        // 重新排序和编号所有号码组
+        this.reorderAndRenumberGroups();
         
         // 检查是否超过数据库号码组上限
         const maxLimit = this.config.MAX_GROUPS_LIMIT;
@@ -2202,8 +2224,11 @@ var NumberMatcherApp = {
             // 计算需要删除的数量
             const deleteCount = this.state.numberGroups.length - maxLimit;
             
-            // 删除最旧的号码组（数组末尾的组）
-            this.state.numberGroups.splice(maxLimit, deleteCount);
+            // 删除最旧的号码组（数组开头的组）
+            this.state.numberGroups.splice(0, deleteCount);
+            
+            // 重新编号
+            this.reorderAndRenumberGroups();
             
             // 如果删除了数据，显示提示
             this.showToast('数据库已超过350组上限，已自动删除最旧的' + deleteCount + '组数据', 'warning');
