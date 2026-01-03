@@ -119,7 +119,11 @@ var NumberMatcherApp = {
         try {
             // 使用硬编码的默认数据作为备用
             var defaultData = { "numberGroups": [
-        {
+                {
+            "id": "2026003",
+            "numbers": [2, 7, 14, 16, 22, 25, 28, 31, 39, 42, 47, 53, 54, 55, 61, 68, 69, 72, 73, 78]
+        },
+                {
             "id": "2026002",
             "numbers": [3, 8, 10, 17, 22, 24, 25, 28, 39, 51, 61, 62, 67, 69, 70, 71, 72, 73, 74, 80]
         },
@@ -225,15 +229,15 @@ var NumberMatcherApp = {
         },
         {
             "id": "2025327",
-            "numbers": [6, 7, 10, 15, 16, 19, 21, 22, 25, 27, 35, 40, 44, 45, 47, 56, 62, 74, 78, 80]
+            "numbers": [6, 7, 10, 15, 16, 17, 19, 21, 22, 25, 27, 35, 36, 40, 44, 45, 47, 56, 62, 74]
         },
         {
             "id": "2025326",
-            "numbers": [7, 17, 22, 24, 28, 37, 41, 42, 49, 51, 53, 57, 68, 69, 73, 76, 77, 79, 80, 82]
+            "numbers": [7, 17, 22, 24, 27, 28, 37, 41, 42, 49, 51, 53, 57, 58, 69, 73, 76, 77, 79, 80]
         },
         {
             "id": "2025325",
-            "numbers": [5, 8, 10, 15, 17, 19, 22, 26, 34, 37, 41, 47, 55, 57, 62, 63, 65, 67, 75, 78]
+            "numbers": [5, 8, 10, 15, 16, 17, 19, 22, 26, 34, 37, 41, 47, 55, 57, 62, 63, 65, 67, 75]
         },
         {
             "id": "2025324",
@@ -269,9 +273,9 @@ var NumberMatcherApp = {
         },
         {
             "id": "2025316",
-            "numbers": [6, 9, 16, 17, 18, 20, 28, 31, 33, 42, 53, 54, 57, 60, 62, 65, 67, 72, 75, 79]
+            "numbers": [6, 9, 16, 17, 18, 20, 28, 31, 33, 42, 53, 54, 55, 57, 60, 62, 65, 67, 72, 75]
         },
-        {
+            {
             "id": "2025315",
             "numbers": [3, 6, 8, 9, 10, 14, 15, 19, 23, 26, 38, 40, 47, 58, 61, 68, 69, 74, 75, 80]
         },
@@ -1534,7 +1538,19 @@ var NumberMatcherApp = {
     ]
 }
             
-            this.state.numberGroups = defaultData.numberGroups;
+            // 为每个号码组添加编号，从旧到新排序，编号从1开始
+            var sortedGroups = defaultData.numberGroups.sort(function(a, b) {
+                var idA = parseInt(a.id) || 0;
+                var idB = parseInt(b.id) || 0;
+                return idA - idB;
+            });
+            
+            // 添加编号
+            sortedGroups.forEach(function(group, index) {
+                group.index = index + 1;
+            });
+            
+            this.state.numberGroups = sortedGroups;
             this.saveToLocalStorage();
             this.updateDataCount();
             this.showToast('已加载默认示例数据', 'success');
@@ -1832,12 +1848,16 @@ var NumberMatcherApp = {
             return;
         }
         
-        // 计算数据库中最大编号
+        // 计算数据库中最大编号和最大索引
         var maxGroupId = 0;
+        var maxIndex = 0;
         allNumberGroups.forEach(function(group) {
             var idNum = parseInt(group.id);
             if (!isNaN(idNum) && idNum > maxGroupId) {
                 maxGroupId = idNum;
+            }
+            if (group.index && group.index > maxIndex) {
+                maxIndex = group.index;
             }
         });
         
@@ -1865,6 +1885,7 @@ var NumberMatcherApp = {
         combinations.forEach(function(combination) {
             var occurrences = 0; // 出现次数
             var maxMatchedGroupId = 0; // 最近出现期数的编号
+            var maxMatchedIndex = 0; // 最近出现期数的索引
             
             // 遍历所有号码组，检查该组合是否完全匹配
             numberGroups.forEach(function(group) {
@@ -1877,12 +1898,13 @@ var NumberMatcherApp = {
                     var groupIdNum = parseInt(group.id);
                     if (!isNaN(groupIdNum) && groupIdNum > maxMatchedGroupId) {
                         maxMatchedGroupId = groupIdNum;
+                        maxMatchedIndex = group.index;
                     }
                 }
             });
             
-            // 计算遗漏期数
-            var absencePeriods = maxGroupId > 0 ? maxGroupId - maxMatchedGroupId : 0;
+            // 计算遗漏期数，使用索引差值计算
+            var absencePeriods = maxIndex > 0 ? maxIndex - maxMatchedIndex : 0;
             
             // 计算概率，使用过滤后的号码组数量作为分母
             var probability = (occurrences / numberGroups.length * 100).toFixed(2);
@@ -2158,10 +2180,20 @@ var NumberMatcherApp = {
     
     // 添加号码组
     addNumberGroup: function(group) {
+        // 找到当前最大的编号
+        var maxIndex = 0;
+        this.state.numberGroups.forEach(function(g) {
+            if (g.index && g.index > maxIndex) {
+                maxIndex = g.index;
+            }
+        });
+        
+        // 为新号码组添加编号
         this.state.numberGroups.unshift({
             id: group.id,
             numbers: group.numbers,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            index: maxIndex + 1
         });
         
         // 检查是否超过数据库号码组上限
@@ -2170,11 +2202,11 @@ var NumberMatcherApp = {
             // 计算需要删除的数量
             const deleteCount = this.state.numberGroups.length - maxLimit;
             
-            // 删除最小编号的号码组（数组末尾的组）
+            // 删除最旧的号码组（数组末尾的组）
             this.state.numberGroups.splice(maxLimit, deleteCount);
             
             // 如果删除了数据，显示提示
-            this.showToast('数据库已超过350组上限，已自动删除最小编号的' + deleteCount + '组数据', 'warning');
+            this.showToast('数据库已超过350组上限，已自动删除最旧的' + deleteCount + '组数据', 'warning');
         }
         
         // 保存到本地存储
