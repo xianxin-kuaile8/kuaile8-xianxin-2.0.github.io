@@ -290,9 +290,9 @@
                         <div class="flex items-center gap-2">
                             <div class="filter-period-buttons flex mr-2">
                                 <button id="filter-all" class="btn-secondary filter-btn active mr-1">全部期数</button>
-                                <button id="filter-50" class="btn-secondary filter-btn mr-1">50期以内</button>
                                 <button id="filter-100" class="btn-secondary filter-btn mr-1">100期以内</button>
-                                <button id="filter-200" class="btn-secondary filter-btn">200期以内</button>
+                                <button id="filter-200" class="btn-secondary filter-btn mr-1">200期以内</button>
+                                <button id="filter-300" class="btn-secondary filter-btn">300期以内</button>
                             </div>
                             <button id="clear-selection" class="btn-danger flex items-center">
                                 <i class="fa fa-times mr-2"></i>一键清除
@@ -479,9 +479,9 @@
                         <div class="flex items-center gap-2">
                             <div class="filter-period-buttons flex mr-2">
                                 <button id="filter-all-prob" class="btn-secondary filter-btn active mr-1">全部期数</button>
-                                <button id="filter-50-prob" class="btn-secondary filter-btn mr-1">50期以内</button>
                                 <button id="filter-100-prob" class="btn-secondary filter-btn mr-1">100期以内</button>
-                                <button id="filter-200-prob" class="btn-secondary filter-btn">200期以内</button>
+                                <button id="filter-200-prob" class="btn-secondary filter-btn mr-1">200期以内</button>
+                                <button id="filter-300-prob" class="btn-secondary filter-btn">300期以内</button>
                             </div>
                             <button id="clear-selection-prob" class="btn-danger flex items-center">
                                 <i class="fa fa-times mr-2"></i>一键清除
@@ -761,10 +761,10 @@
             setInterval(syncDataToProbability, 1000);
             
             // 为概率号码页面的期数筛选按钮添加事件监听
-        document.querySelectorAll('#filter-all-prob, #filter-50-prob, #filter-100-prob, #filter-200-prob').forEach(btn => {
+            document.querySelectorAll('#filter-all-prob, #filter-100-prob, #filter-200-prob, #filter-300-prob').forEach(btn => {
                 btn.addEventListener('click', function() {
                     // 移除所有按钮的active状态
-                    document.querySelectorAll('#filter-all-prob, #filter-50-prob, #filter-100-prob, #filter-200-prob').forEach(b => {
+                    document.querySelectorAll('#filter-all-prob, #filter-100-prob, #filter-200-prob, #filter-300-prob').forEach(b => {
                         b.classList.remove('active');
                     });
                     // 添加当前按钮的active状态
@@ -805,9 +805,9 @@
                 const activeFilterButton = document.querySelector('#probability-match .filter-btn.active');
                 let filterPeriod = 0;
                 if (activeFilterButton) {
-                    if (activeFilterButton.id === 'filter-50-prob') filterPeriod = 50;
-            else if (activeFilterButton.id === 'filter-100-prob') filterPeriod = 100;
-            else if (activeFilterButton.id === 'filter-200-prob') filterPeriod = 200;
+                    if (activeFilterButton.id === 'filter-100-prob') filterPeriod = 100;
+                    else if (activeFilterButton.id === 'filter-200-prob') filterPeriod = 200;
+                    else if (activeFilterButton.id === 'filter-300-prob') filterPeriod = 300;
                 }
                 
                 // 执行概率号码匹配
@@ -857,13 +857,16 @@
                 // 统计其他号码的出现次数
                 const numberOccurrences = {};
                 const lastAppearance = {};
+                const lastAppearanceIndex = {};
                 
-                // 计算数据库中最大编号
+                // 找到最新一期号码组的连续编号
+                let latestGroupIndex = 0;
                 let maxGroupId = 0;
                 numberGroups.forEach(group => {
                     const idNum = parseInt(group.id);
                     if (!isNaN(idNum) && idNum > maxGroupId) {
                         maxGroupId = idNum;
+                        latestGroupIndex = group.index;
                     }
                 });
                 
@@ -882,8 +885,11 @@
                             // 跳过选中的号码
                             if (!selectedNumbers.includes(num)) {
                                 numberOccurrences[num] = (numberOccurrences[num] || 0) + 1;
-                                // 更新最后出现期数
-                                lastAppearance[num] = Math.max(lastAppearance[num] || 0, groupId);
+                                // 更新最后出现期数和对应的连续编号
+                                if (!lastAppearance[num] || groupId > lastAppearance[num]) {
+                                    lastAppearance[num] = groupId;
+                                    lastAppearanceIndex[num] = group.index;
+                                }
                             }
                         });
                     }
@@ -892,8 +898,9 @@
                 // 转换为数组并计算遗漏期数
                 const results = Object.keys(numberOccurrences).map(num => {
                     const lastMatchGroupId = lastAppearance[num];
-                    // 计算遗漏期数 = 最大编号 - 最后匹配的编号
-                    const missCount = maxGroupId > 0 ? maxGroupId - lastMatchGroupId : 0;
+                    const lastMatchIndex = lastAppearanceIndex[num] || 0;
+                    // 计算遗漏期数 = 最新一期连续编号 - 最后匹配的连续编号
+                    const missCount = latestGroupIndex > 0 ? latestGroupIndex - lastMatchIndex : 0;
                     
                     return {
                         number: parseInt(num),
