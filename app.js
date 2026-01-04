@@ -87,7 +87,8 @@ var NumberMatcherApp = {
             all: document.getElementById('filter-all'),
             50: document.getElementById('filter-50'),
             100: document.getElementById('filter-100'),
-            200: document.getElementById('filter-200')
+            200: document.getElementById('filter-200'),
+            300: document.getElementById('filter-300')
         };
     },
     
@@ -122,6 +123,10 @@ var NumberMatcherApp = {
             // 使用硬编码的默认数据作为备用
             var defaultData = { "numberGroups": [
                 {
+            "id": "2026004",
+            "numbers": [4, 5, 9, 13, 16, 21, 23, 24, 32, 35, 37, 38, 45, 50, 52, 54, 55, 62, 63, 64]
+        },
+               {
             "id": "2026003",
             "numbers": [2, 7, 14, 16, 22, 25, 28, 31, 39, 42, 47, 53, 54, 55, 61, 68, 69, 72, 73, 78]
         },
@@ -1628,10 +1633,9 @@ var NumberMatcherApp = {
         if (this.elements.filterButtons[200]) {
             this.elements.filterButtons[200].addEventListener('click', this.handleFilterButtonClick.bind(this, 200));
         }
-        // 移除300期的筛选按钮事件监听
-        // if (this.elements.filterButtons[300]) {
-        //     this.elements.filterButtons[300].addEventListener('click', this.handleFilterButtonClick.bind(this, 300));
-        // }
+        if (this.elements.filterButtons[300]) {
+            this.elements.filterButtons[300].addEventListener('click', this.handleFilterButtonClick.bind(this, 300));
+        }
         
         // 单个导入按钮
         this.elements.importSingle.addEventListener('click', this.handleSingleImport.bind(this));
@@ -1866,11 +1870,10 @@ var NumberMatcherApp = {
         // 根据筛选期数过滤号码组
         var numberGroups = allNumberGroups;
         if (filterPeriod > 0) {
-            // 筛选出编号在(maxGroupId - filterPeriod + 1)到maxGroupId之间的号码组
-            var minId = maxGroupId - filterPeriod + 1;
+            // 筛选出最新的filterPeriod期号码组，使用连续编号（index）来筛选
+            var minIndex = maxIndex - filterPeriod + 1;
             numberGroups = allNumberGroups.filter(function(group) {
-                var groupId = parseInt(group.id);
-                return !isNaN(groupId) && groupId >= minId && groupId <= maxGroupId;
+                return group.index >= minIndex && group.index <= maxIndex;
             });
             
             // 如果过滤后没有号码组，提示用户
