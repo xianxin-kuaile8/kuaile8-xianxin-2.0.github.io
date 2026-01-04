@@ -836,9 +836,15 @@
                 // 根据筛选期数过滤号码组
                 let filteredGroups = allNumberGroups;
                 if (filterPeriod > 0) {
+                    // 计算最大连续编号
+                    const maxIndex = Math.max(...allNumberGroups.map(group => {
+                        return group.index || 0;
+                    }));
+                    
+                    // 筛选出最新的filterPeriod期号码组，使用连续编号（index）来筛选
+                    const minIndex = maxIndex - filterPeriod + 1;
                     filteredGroups = allNumberGroups.filter(group => {
-                        const groupId = parseInt(group.id);
-                        return !isNaN(groupId) && groupId >= (maxGroupId - filterPeriod + 1) && groupId <= maxGroupId;
+                        return group.index >= minIndex && group.index <= maxIndex;
                     });
                 }
                 
@@ -876,12 +882,15 @@
                     const groupId = parseInt(group.id) || 0;
                     
                     // 检查当前组是否包含所有选中的号码（确保类型匹配）
-                const containsAllSelected = selectedNumbers.every(num => groupNumbers.includes(num.toString()) || groupNumbers.includes(num));
+                    const containsAllSelected = selectedNumbers.every(num => {
+                        return groupNumbers.includes(num.toString()) || groupNumbers.includes(num);
+                    });
                     
                     if (containsAllSelected) {
                         // 统计该组中其他号码的出现次数
-                        groupNumbers.forEach(numStr => {
-                            const num = parseInt(numStr);
+                        groupNumbers.forEach(numItem => {
+                            // 确保num是数字类型，无论原始数据是什么类型
+                            const num = typeof numItem === 'number' ? numItem : parseInt(numItem);
                             // 跳过选中的号码
                             if (!selectedNumbers.includes(num)) {
                                 numberOccurrences[num] = (numberOccurrences[num] || 0) + 1;
