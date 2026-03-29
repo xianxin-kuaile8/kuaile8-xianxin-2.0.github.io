@@ -121,8 +121,8 @@ var NumberMatcherApp = {
     loadDefaultData: function() {
         try {
             // 使用硬编码的默认数据作为备用
-            var defaultData = { "numberGroups": [
-                   {
+            var defaultData = { "numberGroups": [     
+                {
             "id": "2026078",
             "numbers": [1, 6, 7, 11, 15, 21, 24, 27, 31, 32, 34, 38, 46, 49, 52, 60, 67, 71, 73, 74]
         },
